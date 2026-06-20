@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { Base64Encoder, LZStringEncoder, CompactSectionEncoder, type TaskSection } from './url-encoder'
+import { Base64Encoder, CompactSectionEncoder, LZStringEncoder } from './url-encoder'
+import type { TaskSection } from '@/types/section'
 
 describe('URL Encoder Tests', () => {
   const encoders = [

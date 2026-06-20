@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react'
 import { defaultSectionEncoder, type SectionEncoder } from '@/lib/url-encoder'
-
-export interface TaskSection {
-  id: string
-  name: string
-  tasks: string[]
-}
+import type { TaskSection } from '@/types/section'
 
 export function useSectionsFromURL(encoder: SectionEncoder = defaultSectionEncoder) {
   const [sections, setSections] = useState<TaskSection[]>([])

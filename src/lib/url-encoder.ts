@@ -1,3 +1,5 @@
+import type { TaskSection } from '@/types/section'
+
 export interface URLEncoder {
   encode(tasks: string[]): string
   decode(encoded: string): string[]
@@ -6,12 +8,6 @@ export interface URLEncoder {
 export interface SectionEncoder {
   encodeSections(sections: TaskSection[]): string
   decodeSections(encoded: string): TaskSection[]
-}
-
-export interface TaskSection {
-  id: string
-  name: string
-  tasks: string[]
 }
 
 export class Base64Encoder implements URLEncoder {

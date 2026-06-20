@@ -1,435 +1,44 @@
-import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
-import { Plus, X, DotsSixVertical, Copy, Sparkle, PencilSimple, Check, Trash } from '@phosphor-icons/react'
+import { motion } from 'framer-motion'
+import { Plus, Copy, Sparkle } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
-import { useSectionsFromURL, type TaskSection } from '@/hooks/use-sections-from-url'
 import { cn } from '@/lib/utils'
-
-interface TaskItemProps {
-  task: string
-  allTasks: string[]
-  isSelected: boolean
-  isSpinning: boolean
-  onEdit: (index: number, value: string) => void
-  onDelete: (index: number) => void
-}
-
-function TaskItem({ task, allTasks, isSelected, isSpinning, onEdit, onDelete }: TaskItemProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(task)
-  const itemRef = useRef<HTMLLIElement>(null)
-  const controls = useDragControls()
-
-  const index = allTasks.indexOf(task)
-
-  useEffect(() => {
-    if (isSelected && isSpinning && itemRef.current) {
-      itemRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'nearest',
-        inline: 'nearest'
-      })
-    }
-  }, [isSelected, isSpinning])
-
-  const handleSave = () => {
-    if (editValue.trim()) {
-      onEdit(index, editValue.trim())
-      setIsEditing(false)
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSave()
-    } else if (e.key === 'Escape') {
-      setEditValue(task)
-      setIsEditing(false)
-    }
-  }
-
-  return (
-    <Reorder.Item
-      value={task}
-      dragListener={false}
-      dragControls={controls}
-      ref={itemRef}
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ 
-        opacity: 1, 
-        y: 0,
-        scale: isSelected && isSpinning ? 1.02 : 1
-      }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{
-        scale: { duration: 0.1 }
-      }}
-      className={cn(
-        'group flex items-start gap-1.5 p-2 rounded-lg border bg-card hover:bg-card/80 transition-colors select-none',
-        isSelected && isSpinning && 'bg-primary/20 border-primary/40 spin-highlight',
-        isSelected && !isSpinning && 'ring-2 ring-accent shadow-lg shadow-accent/20'
-      )}
-    >
-      <div 
-        className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-primary/20 rounded flex-shrink-0"
-        onPointerDown={(e) => controls.start(e)}
-      >
-        <DotsSixVertical weight="bold" className="h-4 w-4 text-muted-foreground" />
-      </div>
-
-      <div className="flex-1 flex items-start gap-1.5 min-w-0">
-        <span className="text-muted-foreground font-semibold text-xs w-5 flex-shrink-0 mt-0.5">{index + 1}</span>
-        {isEditing ? (
-          <textarea
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className="flex-1 text-sm min-h-[2rem] max-h-[8rem] resize-none bg-background border border-input rounded-md px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            autoFocus
-            rows={1}
-            style={{
-              height: 'auto',
-              overflowY: editValue.split('\n').length > 3 ? 'auto' : 'hidden'
-            }}
-            ref={(el) => {
-              if (el) {
-                el.style.height = 'auto'
-                el.style.height = el.scrollHeight + 'px'
-              }
-            }}
-          />
-        ) : (
-          <span className="flex-1 break-words overflow-wrap-anywhere text-sm leading-snug" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{task}</span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-        {isEditing ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            onMouseDown={(e) => {
-              e.preventDefault()
-              handleSave()
-            }}
-            className="h-7 w-7 hover:bg-accent hover:text-accent-foreground"
-          >
-            <Check className="h-3.5 w-3.5" />
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            onMouseDown={(e) => {
-              e.preventDefault()
-              setIsEditing(true)
-            }}
-            className="h-7 w-7 hover:bg-primary/20"
-          >
-            <PencilSimple className="h-3.5 w-3.5" />
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onMouseDown={(e) => {
-            e.preventDefault()
-            onDelete(index)
-          }}
-          className="h-7 w-7 hover:bg-destructive/20 hover:text-destructive"
-        >
-          <X className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    </Reorder.Item>
-  )
-}
-
-interface SectionCardProps {
-  section: TaskSection
-  selectedTask: number | null
-  isSpinning: boolean
-  onUpdateName: (name: string) => void
-  onAddTask: (task: string) => void
-  onEditTask: (index: number, value: string) => void
-  onDeleteTask: (index: number) => void
-  onReorderTasks: (newOrder: string[]) => void
-  onDeleteSection: () => void
-}
-
-function SectionCard({
-  section,
-  selectedTask,
-  isSpinning,
-  onUpdateName,
-  onAddTask,
-  onEditTask,
-  onDeleteTask,
-  onReorderTasks,
-  onDeleteSection,
-}: SectionCardProps) {
-  const [newTask, setNewTask] = useState('')
-  const [isEditingName, setIsEditingName] = useState(false)
-  const [editedName, setEditedName] = useState(section.name)
-
-  const handleAddTask = () => {
-    if (newTask.trim()) {
-      onAddTask(newTask.trim())
-      setNewTask('')
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTask()
-    }
-  }
-
-  const handleSaveName = () => {
-    if (editedName.trim()) {
-      onUpdateName(editedName.trim())
-      setIsEditingName(false)
-    }
-  }
-
-  const handleNameKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSaveName()
-    } else if (e.key === 'Escape') {
-      setEditedName(section.name)
-      setIsEditingName(false)
-    }
-  }
-
-  return (
-    <Card className="p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        {isEditingName ? (
-          <Input
-            value={editedName}
-            onChange={(e) => setEditedName(e.target.value)}
-            onBlur={handleSaveName}
-            onKeyDown={handleNameKeyDown}
-            className="text-lg font-semibold h-9"
-            autoFocus
-          />
-        ) : (
-          <h2 
-            className="text-lg font-semibold cursor-pointer hover:text-primary"
-            onClick={() => setIsEditingName(true)}
-          >
-            {section.name}
-          </h2>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onDeleteSection}
-          className="h-7 w-7 hover:bg-destructive/20 hover:text-destructive"
-        >
-          <Trash className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
-      <div className="flex gap-2">
-        <Input
-          placeholder="Enter a new task..."
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="flex-1 text-sm h-9"
-        />
-        <Button onClick={handleAddTask} className="gap-2 h-9 px-3 text-sm">
-          <Plus className="h-4 w-4" />
-          Add
-        </Button>
-      </div>
-
-      <ScrollArea className="h-[400px] pr-3">
-        <AnimatePresence mode="popLayout">
-          {section.tasks.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center h-[300px] text-muted-foreground"
-            >
-              <Sparkle className="h-12 w-12 mb-4 opacity-50" />
-              <p className="text-sm">No tasks yet</p>
-              <p className="text-xs">Add your first task to get started</p>
-            </motion.div>
-          ) : (
-            <Reorder.Group
-              axis="y"
-              values={section.tasks}
-              onReorder={onReorderTasks}
-              className="space-y-1.5"
-            >
-              {section.tasks.map((task) => (
-                <TaskItem
-                  key={task}
-                  task={task}
-                  allTasks={section.tasks}
-                  isSelected={selectedTask === section.tasks.indexOf(task)}
-                  isSpinning={isSpinning}
-                  onEdit={onEditTask}
-                  onDelete={onDeleteTask}
-                />
-              ))}
-            </Reorder.Group>
-          )}
-        </AnimatePresence>
-      </ScrollArea>
-    </Card>
-  )
-}
+import { useSectionManager } from '@/hooks/use-section-manager'
+import { useSpinController } from '@/hooks/use-spin-controller'
+import { SectionCard } from '@/components/SectionCard'
 
 export default function App() {
-  const [sections, setSections] = useSectionsFromURL()
-  const [selectedTasks, setSelectedTasks] = useState<Map<string, number | null>>(new Map())
-  const [isSpinning, setIsSpinning] = useState(false)
+  const {
+    sections,
+    addSection,
+    deleteSection,
+    updateSectionName,
+    addTask,
+    editTask,
+    deleteTask,
+    reorderTasks,
+    getSection,
+  } = useSectionManager()
 
-  const handleAddSection = () => {
-    const newSection: TaskSection = {
-      id: `section-${Date.now()}`,
-      name: `Section ${sections.length + 1}`,
-      tasks: [],
-    }
-    setSections((current) => [...current, newSection])
-  }
-
-  const handleDeleteSection = (sectionId: string) => {
-    setSections((current) => current.filter((s) => s.id !== sectionId))
-    setSelectedTasks((current) => {
-      const newMap = new Map(current)
-      newMap.delete(sectionId)
-      return newMap
-    })
-  }
-
-  const handleUpdateSectionName = (sectionId: string, name: string) => {
-    setSections((current) =>
-      current.map((s) => (s.id === sectionId ? { ...s, name } : s))
-    )
-  }
-
-  const handleAddTask = (sectionId: string, task: string) => {
-    setSections((current) =>
-      current.map((s) =>
-        s.id === sectionId ? { ...s, tasks: [...s.tasks, task] } : s
-      )
-    )
-  }
-
-  const handleEditTask = (sectionId: string, index: number, value: string) => {
-    setSections((current) =>
-      current.map((s) =>
-        s.id === sectionId
-          ? { ...s, tasks: s.tasks.map((t, i) => (i === index ? value : t)) }
-          : s
-      )
-    )
-  }
+  const {
+    selectedTasks,
+    isSpinning,
+    adjustSelectionAfterDelete,
+    adjustSelectionAfterReorder,
+    spinAll,
+  } = useSpinController(sections)
 
   const handleDeleteTask = (sectionId: string, index: number) => {
-    setSections((current) =>
-      current.map((s) =>
-        s.id === sectionId
-          ? { ...s, tasks: s.tasks.filter((_, i) => i !== index) }
-          : s
-      )
-    )
-
-    setSelectedTasks((current) => {
-      const selectedTask = current.get(sectionId)
-      if (selectedTask === index) {
-        const newMap = new Map(current)
-        newMap.set(sectionId, null)
-        return newMap
-      } else if (selectedTask !== null && selectedTask !== undefined && index < selectedTask) {
-        const newMap = new Map(current)
-        newMap.set(sectionId, selectedTask - 1)
-        return newMap
-      }
-      return current
-    })
+    deleteTask(sectionId, index)
+    adjustSelectionAfterDelete(sectionId, index)
   }
 
   const handleReorderTasks = (sectionId: string, newOrder: string[]) => {
-    setSections((current) =>
-      current.map((s) => (s.id === sectionId ? { ...s, tasks: newOrder } : s))
-    )
-
-    setSelectedTasks((current) => {
-      const section = sections.find((s) => s.id === sectionId)
-      const selectedTask = current.get(sectionId)
-      if (section && selectedTask !== null && selectedTask !== undefined) {
-        const selectedTaskValue = section.tasks[selectedTask]
-        const newIndex = newOrder.indexOf(selectedTaskValue)
-        const newMap = new Map(current)
-        newMap.set(sectionId, newIndex >= 0 ? newIndex : null)
-        return newMap
-      }
-      return current
-    })
-  }
-
-  const handleSpinAll = async () => {
-    const sectionsWithTasks = sections.filter((s) => s.tasks.length > 0)
-    if (sectionsWithTasks.length === 0 || isSpinning) return
-
-    setIsSpinning(true)
-
-    const initialSelections = new Map<string, number>()
-    sectionsWithTasks.forEach((section) => {
-      initialSelections.set(section.id, 0)
-    })
-    setSelectedTasks(initialSelections)
-
-    const finalSelections = new Map<string, number>()
-    const spinConfigs = sectionsWithTasks.map((section) => {
-      const finalSelection = Math.floor(Math.random() * section.tasks.length)
-      finalSelections.set(section.id, finalSelection)
-      const minSpins = section.tasks.length * 3
-      const extraSpins = Math.floor(Math.random() * section.tasks.length * 2)
-      return {
-        sectionId: section.id,
-        taskCount: section.tasks.length,
-        totalSteps: minSpins + extraSpins + finalSelection,
-        finalSelection,
-      }
-    })
-
-    const maxSteps = Math.max(...spinConfigs.map((c) => c.totalSteps))
-
-    for (let step = 0; step < maxSteps; step++) {
-      const progress = step / maxSteps
-      let stepDelay = 30
-      if (progress > 0.6) {
-        stepDelay = 30 + (progress - 0.6) * 400
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, stepDelay))
-
-      setSelectedTasks((current) => {
-        const newMap = new Map(current)
-        spinConfigs.forEach((config) => {
-          if (step < config.totalSteps) {
-            const currentIndex = current.get(config.sectionId) ?? 0
-            newMap.set(config.sectionId, (currentIndex + 1) % config.taskCount)
-          }
-        })
-        return newMap
-      })
+    const section = getSection(sectionId)
+    if (section) {
+      adjustSelectionAfterReorder(sectionId, section.tasks, newOrder)
+      reorderTasks(sectionId, newOrder)
     }
-
-    setSelectedTasks(finalSelections)
-    setIsSpinning(false)
   }
 
   const handleCopyURL = async () => {
@@ -442,6 +51,7 @@ export default function App() {
   }
 
   const hasAnyTasks = sections.some((s) => s.tasks.length > 0)
+  const hasSingleSection = sections.length === 1
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">
@@ -459,7 +69,7 @@ export default function App() {
           </p>
           <div className="flex items-center justify-center gap-3">
             <Button
-              onClick={handleAddSection}
+              onClick={addSection}
               variant="outline"
               className="gap-2 h-9 text-sm"
             >
@@ -492,7 +102,7 @@ export default function App() {
           <>
             <div className={cn(
               "grid gap-5",
-              sections.length === 1 ? "justify-items-center" : "md:grid-cols-2 lg:grid-cols-3"
+              hasSingleSection ? "justify-items-center" : "md:grid-cols-2 lg:grid-cols-3"
             )}>
               {sections.map((section, index) => (
                 <motion.div
@@ -500,18 +110,18 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={cn(sections.length === 1 && "w-full max-w-md")}
+                  className={cn(hasSingleSection && "w-full max-w-md")}
                 >
                   <SectionCard
                     section={section}
                     selectedTask={selectedTasks.get(section.id) ?? null}
                     isSpinning={isSpinning}
-                    onUpdateName={(name) => handleUpdateSectionName(section.id, name)}
-                    onAddTask={(task) => handleAddTask(section.id, task)}
-                    onEditTask={(index, value) => handleEditTask(section.id, index, value)}
+                    onUpdateName={(name) => updateSectionName(section.id, name)}
+                    onAddTask={(task) => addTask(section.id, task)}
+                    onEditTask={(index, value) => editTask(section.id, index, value)}
                     onDeleteTask={(index) => handleDeleteTask(section.id, index)}
                     onReorderTasks={(newOrder) => handleReorderTasks(section.id, newOrder)}
-                    onDeleteSection={() => handleDeleteSection(section.id)}
+                    onDeleteSection={() => deleteSection(section.id)}
                   />
                 </motion.div>
               ))}
@@ -523,7 +133,7 @@ export default function App() {
               className="flex justify-center"
             >
               <Button
-                onClick={handleSpinAll}
+                onClick={spinAll}
                 disabled={!hasAnyTasks || isSpinning}
                 className={cn(
                   'h-14 px-10 text-base font-semibold gap-3 bg-accent text-accent-foreground hover:bg-accent/90',
