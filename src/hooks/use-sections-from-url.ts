@@ -18,10 +18,27 @@ export function useSectionsFromURL() {
         const parsed = JSON.parse(json)
         if (Array.isArray(parsed) && parsed.length > 0) {
           setSections(parsed)
+        } else {
+          setSections([{
+            id: `section-${Date.now()}`,
+            name: 'Section 1',
+            tasks: []
+          }])
         }
       } catch (error) {
         console.error('Failed to decode sections from URL:', error)
+        setSections([{
+          id: `section-${Date.now()}`,
+          name: 'Section 1',
+          tasks: []
+        }])
       }
+    } else {
+      setSections([{
+        id: `section-${Date.now()}`,
+        name: 'Section 1',
+        tasks: []
+      }])
     }
   }, [])
 
