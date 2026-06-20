@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
 import { Plus, X, DotsSixVertical, Copy, Sparkle, PencilSimple, Check } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,14 +16,13 @@ interface TaskItemProps {
   isSpinning: boolean
   onEdit: (index: number, value: string) => void
   onDelete: (index: number) => void
-  onMoveUp: (index: number) => void
-  onMoveDown: (index: number) => void
 }
 
-function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete, onMoveUp, onMoveDown }: TaskItemProps) {
+function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(task)
-  const itemRef = useRef<HTMLDivElement>(null)
+  const itemRef = useRef<HTMLLIElement>(null)
+  const controls = useDragControls()
 
   useEffect(() => {
     if (isSelected && isSpinning && itemRef.current) {
@@ -52,9 +51,11 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete, onMov
   }
 
   return (
-    <motion.div
+    <Reorder.Item
+      value={task}
+      dragListener={false}
+      dragControls={controls}
       ref={itemRef}
-      layout
       initial={{ opacity: 0, y: -10 }}
       animate={{ 
         opacity: 1, 
@@ -71,23 +72,11 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete, onMov
         isSelected && !isSpinning && 'ring-2 ring-accent shadow-lg shadow-accent/20'
       )}
     >
-      <div className="flex flex-col gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-4 w-6 cursor-move hover:bg-primary/20 text-muted-foreground"
-          onClick={() => onMoveUp(index)}
-        >
-          <DotsSixVertical weight="bold" className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-4 w-6 cursor-move hover:bg-primary/20 text-muted-foreground"
-          onClick={() => onMoveDown(index)}
-        >
-          <DotsSixVertical weight="bold" className="h-4 w-4" />
-        </Button>
+      <div 
+        className="cursor-grab active:cursor-grabbing p-1 hover:bg-primary/20 rounded"
+        onPointerDown={(e) => controls.start(e)}
+      >
+        <DotsSixVertical weight="bold" className="h-5 w-5 text-muted-foreground" />
       </div>
 
       <div className="flex-1 flex items-center gap-2">
@@ -135,7 +124,7 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete, onMov
           <X className="h-4 w-4" />
         </Button>
       </div>
-    </motion.div>
+    </Reorder.Item>
   )
 }
 
@@ -191,6 +180,7 @@ export default function App() {
   }
 
   const handleDeleteTask = (index: number) => {
+    const taskToDelete = tasks[index]
     setTasks((current) => current.filter((_, i) => i !== index))
     if (selectedTask === index) {
       setSelectedTask(null)
@@ -203,31 +193,12 @@ export default function App() {
     setTasks((current) => current.map((task, i) => (i === index ? value : task)))
   }
 
-  const handleMoveUp = (index: number) => {
-    if (index === 0) return
-    setTasks((current) => {
-      const newTasks = [...current]
-      ;[newTasks[index - 1], newTasks[index]] = [newTasks[index], newTasks[index - 1]]
-      return newTasks
-    })
-    if (selectedTask === index) {
-      setSelectedTask(index - 1)
-    } else if (selectedTask === index - 1) {
-      setSelectedTask(index)
-    }
-  }
-
-  const handleMoveDown = (index: number) => {
-    if (index === tasks.length - 1) return
-    setTasks((current) => {
-      const newTasks = [...current]
-      ;[newTasks[index], newTasks[index + 1]] = [newTasks[index + 1], newTasks[index]]
-      return newTasks
-    })
-    if (selectedTask === index) {
-      setSelectedTask(index + 1)
-    } else if (selectedTask === index + 1) {
-      setSelectedTask(index)
+  const handleReorder = (newOrder: string[]) => {
+    setTasks(newOrder)
+    if (selectedTask !== null) {
+      const selectedTaskValue = tasks[selectedTask]
+      const newIndex = newOrder.indexOf(selectedTaskValue)
+      setSelectedTask(newIndex >= 0 ? newIndex : null)
     }
   }
 
@@ -235,18 +206,28 @@ export default function App() {
     if (tasks.length === 0 || isSpinning) return
 
     setIsSpinning(true)
-    setSelectedTask(null)
-
-    const spinDuration = 2000
-    const updateInterval = 50
-    const updates = spinDuration / updateInterval
-
-    for (let i = 0; i < updates; i++) {
-      await new Promise((resolve) => setTimeout(resolve, updateInterval))
-      setSelectedTask(Math.floor(Math.random() * tasks.length))
-    }
+    setSelectedTask(0)
 
     const finalSelection = Math.floor(Math.random() * tasks.length)
+    const minSpins = tasks.length * 3
+    const extraSpins = Math.floor(Math.random() * tasks.length * 2)
+    const totalSteps = minSpins + extraSpins + finalSelection
+
+    let currentIndex = 0
+    let stepDelay = 30
+
+    for (let step = 0; step < totalSteps; step++) {
+      await new Promise((resolve) => setTimeout(resolve, stepDelay))
+      
+      currentIndex = (currentIndex + 1) % tasks.length
+      setSelectedTask(currentIndex)
+
+      const progress = step / totalSteps
+      if (progress > 0.6) {
+        stepDelay = 30 + (progress - 0.6) * 400
+      }
+    }
+
     setSelectedTask(finalSelection)
     setIsSpinning(false)
   }
@@ -327,21 +308,24 @@ export default function App() {
                       <p className="text-sm">Add your first task to get started</p>
                     </motion.div>
                   ) : (
-                    <div className="space-y-2">
+                    <Reorder.Group
+                      axis="y"
+                      values={tasks}
+                      onReorder={handleReorder}
+                      className="space-y-2"
+                    >
                       {tasks.map((task, index) => (
                         <TaskItem
-                          key={`${task}-${index}`}
+                          key={task}
                           task={task}
                           index={index}
                           isSelected={selectedTask === index}
                           isSpinning={isSpinning}
                           onEdit={handleEditTask}
                           onDelete={handleDeleteTask}
-                          onMoveUp={handleMoveUp}
-                          onMoveDown={handleMoveDown}
                         />
                       ))}
-                    </div>
+                    </Reorder.Group>
                   )}
                 </AnimatePresence>
               </ScrollArea>
