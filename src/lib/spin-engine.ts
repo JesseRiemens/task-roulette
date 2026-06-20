@@ -13,13 +13,15 @@ export class SpinEngine {
     
     return sectionsWithTasks.map((section) => {
       const finalSelection = Math.floor(Math.random() * section.tasks.length)
-      const minSpins = section.tasks.length * 3
-      const extraSpins = Math.floor(Math.random() * section.tasks.length * 2)
+      const minFullRotations = 3
+      const extraFullRotations = Math.floor(Math.random() * 2)
+      const totalFullRotations = minFullRotations + extraFullRotations
+      const totalSteps = (totalFullRotations * section.tasks.length) + finalSelection
       
       return {
         sectionId: section.id,
         taskCount: section.tasks.length,
-        totalSteps: minSpins + extraSpins + finalSelection,
+        totalSteps,
         finalSelection,
       }
     })
