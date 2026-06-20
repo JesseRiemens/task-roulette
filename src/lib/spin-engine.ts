@@ -16,7 +16,7 @@ export class SpinEngine {
       const minFullRotations = 3
       const extraFullRotations = Math.floor(Math.random() * 2)
       const totalFullRotations = minFullRotations + extraFullRotations
-      const totalSteps = (totalFullRotations * section.tasks.length) + finalSelection
+      const totalSteps = (totalFullRotations * section.tasks.length) + finalSelection + 1
       
       return {
         sectionId: section.id,
@@ -30,7 +30,7 @@ export class SpinEngine {
   static calculateStepDelay(step: number, maxSteps: number): number {
     const progress = step / maxSteps
     if (progress > 0.6) {
-      return 70 + (progress - 0.6) * 4000
+      return 70 + (progress - 0.6) * 3000
     }
     return 70
   }
