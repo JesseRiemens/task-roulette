@@ -67,61 +67,61 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: Tas
         scale: { duration: 0.1 }
       }}
       className={cn(
-        'group flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-card/80 transition-colors select-none',
+        'group flex items-start gap-1.5 p-2 rounded-lg border bg-card hover:bg-card/80 transition-colors select-none',
         isSelected && isSpinning && 'bg-primary/20 border-primary/40 spin-highlight',
         isSelected && !isSpinning && 'ring-2 ring-accent shadow-lg shadow-accent/20'
       )}
     >
       <div 
-        className="cursor-grab active:cursor-grabbing p-1 hover:bg-primary/20 rounded"
+        className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-primary/20 rounded flex-shrink-0"
         onPointerDown={(e) => controls.start(e)}
       >
-        <DotsSixVertical weight="bold" className="h-5 w-5 text-muted-foreground" />
+        <DotsSixVertical weight="bold" className="h-4 w-4 text-muted-foreground" />
       </div>
 
-      <div className="flex-1 flex items-center gap-2">
-        <span className="text-muted-foreground font-semibold text-sm w-6">{index + 1}</span>
+      <div className="flex-1 flex items-start gap-1.5 min-w-0">
+        <span className="text-muted-foreground font-semibold text-xs w-5 flex-shrink-0 mt-0.5">{index + 1}</span>
         {isEditing ? (
           <Input
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            className="flex-1"
+            className="flex-1 text-sm h-8"
             autoFocus
           />
         ) : (
-          <span className="flex-1 truncate">{task}</span>
+          <span className="flex-1 break-words text-sm leading-snug">{task}</span>
         )}
       </div>
 
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
         {isEditing ? (
           <Button
             variant="ghost"
             size="icon"
             onClick={handleSave}
-            className="h-8 w-8 hover:bg-accent hover:text-accent-foreground"
+            className="h-7 w-7 hover:bg-accent hover:text-accent-foreground"
           >
-            <Check className="h-4 w-4" />
+            <Check className="h-3.5 w-3.5" />
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsEditing(true)}
-            className="h-8 w-8 hover:bg-primary/20"
+            className="h-7 w-7 hover:bg-primary/20"
           >
-            <PencilSimple className="h-4 w-4" />
+            <PencilSimple className="h-3.5 w-3.5" />
           </Button>
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => onDelete(index)}
-          className="h-8 w-8 hover:bg-destructive/20 hover:text-destructive"
+          className="h-7 w-7 hover:bg-destructive/20 hover:text-destructive"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </Button>
       </div>
     </Reorder.Item>
@@ -185,7 +185,7 @@ function SectionCard({
   }
 
   return (
-    <Card className="p-6 space-y-4">
+    <Card className="p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         {isEditingName ? (
           <Input
@@ -193,12 +193,12 @@ function SectionCard({
             onChange={(e) => setEditedName(e.target.value)}
             onBlur={handleSaveName}
             onKeyDown={handleNameKeyDown}
-            className="text-xl font-semibold"
+            className="text-lg font-semibold h-9"
             autoFocus
           />
         ) : (
           <h2 
-            className="text-xl font-semibold cursor-pointer hover:text-primary"
+            className="text-lg font-semibold cursor-pointer hover:text-primary"
             onClick={() => setIsEditingName(true)}
           >
             {section.name}
@@ -208,9 +208,9 @@ function SectionCard({
           variant="ghost"
           size="icon"
           onClick={onDeleteSection}
-          className="h-8 w-8 hover:bg-destructive/20 hover:text-destructive"
+          className="h-7 w-7 hover:bg-destructive/20 hover:text-destructive"
         >
-          <Trash className="h-4 w-4" />
+          <Trash className="h-3.5 w-3.5" />
         </Button>
       </div>
 
@@ -220,15 +220,15 @@ function SectionCard({
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1"
+          className="flex-1 text-sm h-9"
         />
-        <Button onClick={handleAddTask} className="gap-2">
-          <Plus className="h-5 w-5" />
+        <Button onClick={handleAddTask} className="gap-2 h-9 px-3 text-sm">
+          <Plus className="h-4 w-4" />
           Add
         </Button>
       </div>
 
-      <ScrollArea className="h-[400px] pr-4">
+      <ScrollArea className="h-[400px] pr-3">
         <AnimatePresence mode="popLayout">
           {section.tasks.length === 0 ? (
             <motion.div
@@ -238,15 +238,15 @@ function SectionCard({
               className="flex flex-col items-center justify-center h-[300px] text-muted-foreground"
             >
               <Sparkle className="h-12 w-12 mb-4 opacity-50" />
-              <p>No tasks yet</p>
-              <p className="text-sm">Add your first task to get started</p>
+              <p className="text-sm">No tasks yet</p>
+              <p className="text-xs">Add your first task to get started</p>
             </motion.div>
           ) : (
             <Reorder.Group
               axis="y"
               values={section.tasks}
               onReorder={onReorderTasks}
-              className="space-y-2"
+              className="space-y-1.5"
             >
               {section.tasks.map((task, index) => (
                 <TaskItem
@@ -423,32 +423,32 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+      <div className="mx-auto max-w-7xl space-y-6">
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4"
+          className="text-center space-y-3"
         >
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
             Task Roulette
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground">
             Create sections, add tasks, and spin them all at once
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-3">
             <Button
               onClick={handleAddSection}
               variant="outline"
-              className="gap-2"
+              className="gap-2 h-9 text-sm"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
               Add Section
             </Button>
             <Button
               onClick={handleCopyURL}
               variant="outline"
               disabled={sections.length === 0}
-              className="gap-2"
+              className="gap-2 h-9 text-sm"
             >
               <Copy className="h-4 w-4" />
               Copy URL
@@ -468,13 +468,17 @@ export default function App() {
           </motion.div>
         ) : (
           <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className={cn(
+              "grid gap-5",
+              sections.length === 1 ? "justify-items-center" : "md:grid-cols-2 lg:grid-cols-3"
+            )}>
               {sections.map((section, index) => (
                 <motion.div
                   key={section.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
+                  className={cn(sections.length === 1 && "w-full max-w-md")}
                 >
                   <SectionCard
                     section={section}
@@ -500,11 +504,11 @@ export default function App() {
                 onClick={handleSpinAll}
                 disabled={!hasAnyTasks || isSpinning}
                 className={cn(
-                  'h-16 px-12 text-lg font-semibold gap-3 bg-accent text-accent-foreground hover:bg-accent/90',
+                  'h-14 px-10 text-base font-semibold gap-3 bg-accent text-accent-foreground hover:bg-accent/90',
                   !isSpinning && hasAnyTasks && 'pulse-glow'
                 )}
               >
-                <Sparkle className="h-6 w-6" weight="fill" />
+                <Sparkle className="h-5 w-5" weight="fill" />
                 {isSpinning ? 'Spinning...' : 'Spin All Sections'}
               </Button>
             </motion.div>

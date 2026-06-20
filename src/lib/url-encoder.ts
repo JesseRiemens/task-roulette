@@ -35,7 +35,7 @@ export class CompactSectionEncoder implements SectionEncoder {
   private lzEncoder = new LZStringEncoder()
 
   encodeSections(sections: TaskSection[]): string {
-    const compact = sections.map(s => [s.name, s.tasks])
+    const compact = sections.map(s => ({ [s.name]: s.tasks }))
     const json = JSON.stringify(compact)
     return this.lzEncoder.compressToEncodedURIComponent(json)
   }
@@ -47,11 +47,24 @@ export class CompactSectionEncoder implements SectionEncoder {
       const parsed = JSON.parse(json)
       if (!Array.isArray(parsed)) return []
       
-      return parsed.map((item, index) => ({
-        id: `section-${index}`,
-        name: Array.isArray(item) && item[0] ? item[0] : `Section ${index + 1}`,
-        tasks: Array.isArray(item) && Array.isArray(item[1]) ? item[1] : []
-      }))
+      return parsed.map((item, index) => {
+        if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+          const entries = Object.entries(item)
+          if (entries.length > 0) {
+            const [name, tasks] = entries[0]
+            return {
+              id: `section-${index}`,
+              name: name || `Section ${index + 1}`,
+              tasks: Array.isArray(tasks) ? tasks : []
+            }
+          }
+        }
+        return {
+          id: `section-${index}`,
+          name: `Section ${index + 1}`,
+          tasks: []
+        }
+      })
     } catch {
       return []
     }

@@ -228,6 +228,21 @@ describe('URL Encoder Tests', () => {
       expect(decoded[1].id).toBe('section-1')
     })
 
+    it('uses object format: {sectionname: [tasks]}', () => {
+      const sections: TaskSection[] = [
+        {
+          id: 'section-1',
+          name: 'Work',
+          tasks: ['Task 1', 'Task 2']
+        }
+      ]
+      const encoded = encoder.encodeSections(sections)
+      const decoded = encoder.decodeSections(encoded)
+      
+      expect(decoded[0].name).toBe('Work')
+      expect(decoded[0].tasks).toEqual(['Task 1', 'Task 2'])
+    })
+
     it('is more compact than naive JSON encoding', () => {
       const sections: TaskSection[] = [
         {
