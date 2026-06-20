@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X, DotsSixVertical, Copy, Sparkle, PencilSimple, Check } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -13,15 +13,27 @@ interface TaskItemProps {
   task: string
   index: number
   isSelected: boolean
+  isSpinning: boolean
   onEdit: (index: number, value: string) => void
   onDelete: (index: number) => void
   onMoveUp: (index: number) => void
   onMoveDown: (index: number) => void
 }
 
-function TaskItem({ task, index, isSelected, onEdit, onDelete, onMoveUp, onMoveDown }: TaskItemProps) {
+function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete, onMoveUp, onMoveDown }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(task)
+  const itemRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isSelected && isSpinning && itemRef.current) {
+      itemRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest',
+        inline: 'nearest'
+      })
+    }
+  }, [isSelected, isSpinning])
 
   const handleSave = () => {
     if (editValue.trim()) {
@@ -41,13 +53,22 @@ function TaskItem({ task, index, isSelected, onEdit, onDelete, onMoveUp, onMoveD
 
   return (
     <motion.div
+      ref={itemRef}
       layout
       initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ 
+        opacity: 1, 
+        y: 0,
+        scale: isSelected && isSpinning ? 1.02 : 1
+      }}
       exit={{ opacity: 0, scale: 0.9 }}
+      transition={{
+        scale: { duration: 0.1 }
+      }}
       className={cn(
         'group flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-card/80 transition-colors',
-        isSelected && 'ring-2 ring-accent shadow-lg shadow-accent/20'
+        isSelected && isSpinning && 'bg-primary/20 border-primary/40 spin-highlight',
+        isSelected && !isSpinning && 'ring-2 ring-accent shadow-lg shadow-accent/20'
       )}
     >
       <div className="flex flex-col gap-1">
@@ -312,7 +333,8 @@ export default function App() {
                           key={`${task}-${index}`}
                           task={task}
                           index={index}
-                          isSelected={selectedTask === index && !isSpinning}
+                          isSelected={selectedTask === index}
+                          isSpinning={isSpinning}
                           onEdit={handleEditTask}
                           onDelete={handleDeleteTask}
                           onMoveUp={handleMoveUp}

@@ -90,10 +90,23 @@
   }
 }
 
+@keyframes spin-highlight {
+  0%, 100% {
+    box-shadow: 0 0 10px oklch(0.35 0.15 300 / 0.4), inset 0 0 20px oklch(0.35 0.15 300 / 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px oklch(0.35 0.15 300 / 0.6), inset 0 0 30px oklch(0.35 0.15 300 / 0.2);
+  }
+}
+
 .roulette-spin {
   animation: roulette-spin 0.1s ease-in-out;
 }
 
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.spin-highlight {
+  animation: spin-highlight 0.3s ease-in-out;
 }
