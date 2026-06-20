@@ -3,6 +3,17 @@ export interface URLEncoder {
   decode(encoded: string): string[]
 }
 
+export interface SectionEncoder {
+  encodeSections(sections: TaskSection[]): string
+  decodeSections(encoded: string): TaskSection[]
+}
+
+export interface TaskSection {
+  id: string
+  name: string
+  tasks: string[]
+}
+
 export class Base64Encoder implements URLEncoder {
   encode(tasks: string[]): string {
     const json = JSON.stringify(tasks)
@@ -14,6 +25,33 @@ export class Base64Encoder implements URLEncoder {
       const json = decodeURIComponent(atob(encoded))
       const parsed = JSON.parse(json)
       return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+}
+
+export class CompactSectionEncoder implements SectionEncoder {
+  private lzEncoder = new LZStringEncoder()
+
+  encodeSections(sections: TaskSection[]): string {
+    const compact = sections.map(s => [s.name, s.tasks])
+    const json = JSON.stringify(compact)
+    return this.lzEncoder.compressToEncodedURIComponent(json)
+  }
+
+  decodeSections(encoded: string): TaskSection[] {
+    try {
+      const json = this.lzEncoder.decompressFromEncodedURIComponent(encoded)
+      if (!json) return []
+      const parsed = JSON.parse(json)
+      if (!Array.isArray(parsed)) return []
+      
+      return parsed.map((item, index) => ({
+        id: `section-${index}`,
+        name: Array.isArray(item) && item[0] ? item[0] : `Section ${index + 1}`,
+        tasks: Array.isArray(item) && Array.isArray(item[1]) ? item[1] : []
+      }))
     } catch {
       return []
     }
@@ -37,14 +75,14 @@ export class LZStringEncoder implements URLEncoder {
     }
   }
 
-  private compressToEncodedURIComponent(input: string): string {
+  compressToEncodedURIComponent(input: string): string {
     if (input == null) return ""
     return this._compress(input, 6, (a: number) => {
       return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".charAt(a)
     })
   }
 
-  private decompressFromEncodedURIComponent(input: string): string | null {
+  decompressFromEncodedURIComponent(input: string): string | null {
     if (input == null) return ""
     if (input == "") return null
     input = input.replace(/ /g, "+")
@@ -419,3 +457,4 @@ export class LZStringEncoder implements URLEncoder {
 }
 
 export const defaultEncoder: URLEncoder = new LZStringEncoder()
+export const defaultSectionEncoder: SectionEncoder = new CompactSectionEncoder()

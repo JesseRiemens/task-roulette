@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Base64Encoder, LZStringEncoder } from './url-encoder'
+import { Base64Encoder, LZStringEncoder, CompactSectionEncoder, type TaskSection } from './url-encoder'
 
 describe('URL Encoder Tests', () => {
   const encoders = [
@@ -124,6 +124,132 @@ describe('URL Encoder Tests', () => {
       })
 
       expect(true).toBe(true)
+    })
+  })
+
+  describe('CompactSectionEncoder', () => {
+    const encoder = new CompactSectionEncoder()
+
+    it('encodes and decodes empty sections array', () => {
+      const sections: TaskSection[] = []
+      const encoded = encoder.encodeSections(sections)
+      const decoded = encoder.decodeSections(encoded)
+      expect(decoded).toEqual(sections)
+    })
+
+    it('encodes and decodes single section with no tasks', () => {
+      const sections: TaskSection[] = [
+        { id: 'section-1', name: 'Work Tasks', tasks: [] }
+      ]
+      const encoded = encoder.encodeSections(sections)
+      const decoded = encoder.decodeSections(encoded)
+      expect(decoded[0].name).toBe('Work Tasks')
+      expect(decoded[0].tasks).toEqual([])
+    })
+
+    it('encodes and decodes single section with tasks', () => {
+      const sections: TaskSection[] = [
+        {
+          id: 'section-1',
+          name: 'Work Tasks',
+          tasks: ['Complete report', 'Review PRs', 'Team meeting']
+        }
+      ]
+      const encoded = encoder.encodeSections(sections)
+      const decoded = encoder.decodeSections(encoded)
+      expect(decoded[0].name).toBe('Work Tasks')
+      expect(decoded[0].tasks).toEqual(['Complete report', 'Review PRs', 'Team meeting'])
+    })
+
+    it('encodes and decodes multiple sections', () => {
+      const sections: TaskSection[] = [
+        {
+          id: 'section-1',
+          name: 'Work',
+          tasks: ['Task 1', 'Task 2']
+        },
+        {
+          id: 'section-2',
+          name: 'Personal',
+          tasks: ['Buy groceries', 'Exercise']
+        },
+        {
+          id: 'section-3',
+          name: 'Learning',
+          tasks: ['Read book', 'Practice coding']
+        }
+      ]
+      const encoded = encoder.encodeSections(sections)
+      const decoded = encoder.decodeSections(encoded)
+      
+      expect(decoded.length).toBe(3)
+      expect(decoded[0].name).toBe('Work')
+      expect(decoded[0].tasks).toEqual(['Task 1', 'Task 2'])
+      expect(decoded[1].name).toBe('Personal')
+      expect(decoded[1].tasks).toEqual(['Buy groceries', 'Exercise'])
+      expect(decoded[2].name).toBe('Learning')
+      expect(decoded[2].tasks).toEqual(['Read book', 'Practice coding'])
+    })
+
+    it('handles sections with special characters', () => {
+      const sections: TaskSection[] = [
+        {
+          id: 'section-1',
+          name: 'Work 💼',
+          tasks: ['Task with "quotes"', 'Task with émoji 🎉']
+        }
+      ]
+      const encoded = encoder.encodeSections(sections)
+      const decoded = encoder.decodeSections(encoded)
+      
+      expect(decoded[0].name).toBe('Work 💼')
+      expect(decoded[0].tasks).toEqual(['Task with "quotes"', 'Task with émoji 🎉'])
+    })
+
+    it('handles invalid encoded strings gracefully', () => {
+      const decoded = encoder.decodeSections('invalid-encoding')
+      expect(decoded).toEqual([])
+    })
+
+    it('handles empty string', () => {
+      const decoded = encoder.decodeSections('')
+      expect(decoded).toEqual([])
+    })
+
+    it('regenerates section IDs on decode', () => {
+      const sections: TaskSection[] = [
+        { id: 'original-id-1', name: 'Section 1', tasks: ['Task A'] },
+        { id: 'original-id-2', name: 'Section 2', tasks: ['Task B'] }
+      ]
+      const encoded = encoder.encodeSections(sections)
+      const decoded = encoder.decodeSections(encoded)
+      
+      expect(decoded[0].id).toBe('section-0')
+      expect(decoded[1].id).toBe('section-1')
+    })
+
+    it('is more compact than naive JSON encoding', () => {
+      const sections: TaskSection[] = [
+        {
+          id: 'section-1',
+          name: 'Work Tasks',
+          tasks: Array.from({ length: 10 }, (_, i) => `Complete task ${i + 1}`)
+        },
+        {
+          id: 'section-2',
+          name: 'Personal Tasks',
+          tasks: Array.from({ length: 10 }, (_, i) => `Personal item ${i + 1}`)
+        }
+      ]
+
+      const naiveEncoded = btoa(encodeURIComponent(JSON.stringify(sections)))
+      const compactEncoded = encoder.encodeSections(sections)
+
+      console.log(`Naive encoding length: ${naiveEncoded.length}`)
+      console.log(`Compact encoding length: ${compactEncoded.length}`)
+      console.log(`Savings: ${((1 - compactEncoded.length / naiveEncoded.length) * 100).toFixed(1)}%`)
+
+      expect(compactEncoded.length).toBeLessThan(naiveEncoded.length)
     })
   })
 })

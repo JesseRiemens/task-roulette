@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { defaultSectionEncoder, type SectionEncoder } from '@/lib/url-encoder'
 
 export interface TaskSection {
   id: string
@@ -6,18 +7,17 @@ export interface TaskSection {
   tasks: string[]
 }
 
-export function useSectionsFromURL() {
+export function useSectionsFromURL(encoder: SectionEncoder = defaultSectionEncoder) {
   const [sections, setSections] = useState<TaskSection[]>([])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const encoded = params.get('sections')
+    const encoded = params.get('s')
     if (encoded) {
       try {
-        const json = decodeURIComponent(atob(encoded))
-        const parsed = JSON.parse(json)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSections(parsed)
+        const decoded = encoder.decodeSections(encoded)
+        if (decoded.length > 0) {
+          setSections(decoded)
         } else {
           setSections([{
             id: `section-${Date.now()}`,
@@ -40,19 +40,18 @@ export function useSectionsFromURL() {
         tasks: []
       }])
     }
-  }, [])
+  }, [encoder])
 
   useEffect(() => {
     const newUrl = new URL(window.location.href)
     if (sections.length > 0) {
-      const json = JSON.stringify(sections)
-      const encoded = btoa(encodeURIComponent(json))
-      newUrl.searchParams.set('sections', encoded)
+      const encoded = encoder.encodeSections(sections)
+      newUrl.searchParams.set('s', encoded)
     } else {
-      newUrl.searchParams.delete('sections')
+      newUrl.searchParams.delete('s')
     }
     window.history.replaceState({}, '', newUrl.toString())
-  }, [sections])
+  }, [sections, encoder])
 
   return [sections, setSections] as const
 }
