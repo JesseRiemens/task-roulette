@@ -82,16 +82,27 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: Tas
       <div className="flex-1 flex items-start gap-1.5 min-w-0">
         <span className="text-muted-foreground font-semibold text-xs w-5 flex-shrink-0 mt-0.5">{index + 1}</span>
         {isEditing ? (
-          <Input
+          <textarea
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            className="flex-1 text-sm h-8"
+            className="flex-1 text-sm min-h-[2rem] max-h-[8rem] resize-none bg-background border border-input rounded-md px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             autoFocus
+            rows={1}
+            style={{
+              height: 'auto',
+              overflowY: editValue.split('\n').length > 3 ? 'auto' : 'hidden'
+            }}
+            ref={(el) => {
+              if (el) {
+                el.style.height = 'auto'
+                el.style.height = el.scrollHeight + 'px'
+              }
+            }}
           />
         ) : (
-          <span className="flex-1 break-words text-sm leading-snug">{task}</span>
+          <span className="flex-1 break-words overflow-wrap-anywhere text-sm leading-snug" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{task}</span>
         )}
       </div>
 
@@ -100,7 +111,10 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: Tas
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleSave}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              handleSave()
+            }}
             className="h-7 w-7 hover:bg-accent hover:text-accent-foreground"
           >
             <Check className="h-3.5 w-3.5" />
@@ -109,7 +123,10 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: Tas
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsEditing(true)}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setIsEditing(true)
+            }}
             className="h-7 w-7 hover:bg-primary/20"
           >
             <PencilSimple className="h-3.5 w-3.5" />
@@ -118,7 +135,10 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: Tas
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => onDelete(index)}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            onDelete(index)
+          }}
           className="h-7 w-7 hover:bg-destructive/20 hover:text-destructive"
         >
           <X className="h-3.5 w-3.5" />
