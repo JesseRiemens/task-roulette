@@ -21,8 +21,8 @@ export function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete
 
   useEffect(() => {
     if (isSelected && isSpinning && itemRef.current) {
-      itemRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
+      itemRef.current.scrollIntoView({
+        behavior: 'smooth',
         block: 'nearest',
         inline: 'nearest'
       })
@@ -52,8 +52,8 @@ export function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete
       dragControls={controls}
       ref={itemRef}
       initial={{ opacity: 0, y: -10 }}
-      animate={{ 
-        opacity: 1, 
+      animate={{
+        opacity: 1,
         y: 0,
         scale: isSelected && isSpinning ? 1.02 : 1
       }}
@@ -67,8 +67,9 @@ export function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete
         isSelected && !isSpinning && 'ring-2 ring-accent shadow-lg shadow-accent/20'
       )}
     >
-      <div 
+      <div
         className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-primary/20 rounded flex-shrink-0"
+        style={{ touchAction: 'none' }}
         onPointerDown={(e) => controls.start(e)}
       >
         <DotsSixVertical weight="bold" className="h-4 w-4 text-muted-foreground" />
