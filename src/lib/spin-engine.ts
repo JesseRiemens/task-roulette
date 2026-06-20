@@ -28,9 +28,9 @@ export class SpinEngine {
   static calculateStepDelay(step: number, maxSteps: number): number {
     const progress = step / maxSteps
     if (progress > 0.6) {
-      return 30 + (progress - 0.6) * 1600
+      return 70 + (progress - 0.6) * 4000
     }
-    return 30
+    return 70
   }
 
   static getNextIndex(currentIndex: number, taskCount: number): number {
