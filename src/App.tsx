@@ -11,18 +11,20 @@ import { cn } from '@/lib/utils'
 
 interface TaskItemProps {
   task: string
-  index: number
+  allTasks: string[]
   isSelected: boolean
   isSpinning: boolean
   onEdit: (index: number, value: string) => void
   onDelete: (index: number) => void
 }
 
-function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: TaskItemProps) {
+function TaskItem({ task, allTasks, isSelected, isSpinning, onEdit, onDelete }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(task)
   const itemRef = useRef<HTMLLIElement>(null)
   const controls = useDragControls()
+
+  const index = allTasks.indexOf(task)
 
   useEffect(() => {
     if (isSelected && isSpinning && itemRef.current) {
@@ -268,12 +270,12 @@ function SectionCard({
               onReorder={onReorderTasks}
               className="space-y-1.5"
             >
-              {section.tasks.map((task, index) => (
+              {section.tasks.map((task) => (
                 <TaskItem
                   key={task}
                   task={task}
-                  index={index}
-                  isSelected={selectedTask === index}
+                  allTasks={section.tasks}
+                  isSelected={selectedTask === section.tasks.indexOf(task)}
                   isSpinning={isSpinning}
                   onEdit={onEditTask}
                   onDelete={onDeleteTask}
