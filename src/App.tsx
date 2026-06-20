@@ -67,7 +67,7 @@ function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete }: Tas
         scale: { duration: 0.1 }
       }}
       className={cn(
-        'group flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-card/80 transition-colors',
+        'group flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-card/80 transition-colors select-none',
         isSelected && isSpinning && 'bg-primary/20 border-primary/40 spin-highlight',
         isSelected && !isSpinning && 'ring-2 ring-accent shadow-lg shadow-accent/20'
       )}
