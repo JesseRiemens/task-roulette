@@ -23,8 +23,10 @@ export default function App() {
   const {
     selectedTasks,
     isSpinning,
+    spinningState,
     adjustSelectionAfterDelete,
     adjustSelectionAfterReorder,
+    spinSection,
     spinAll,
   } = useSpinController(sections)
 
@@ -116,12 +118,14 @@ export default function App() {
                     section={section}
                     selectedTask={selectedTasks.get(section.id) ?? null}
                     isSpinning={isSpinning}
+                    isSectionSpinning={spinningState.get(section.id) ?? false}
                     onUpdateName={(name) => updateSectionName(section.id, name)}
                     onAddTask={(task) => addTask(section.id, task)}
                     onEditTask={(index, value) => editTask(section.id, index, value)}
                     onDeleteTask={(index) => handleDeleteTask(section.id, index)}
                     onReorderTasks={(newOrder) => handleReorderTasks(section.id, newOrder)}
                     onDeleteSection={() => deleteSection(section.id)}
+                    onSpinSection={() => spinSection(section.id)}
                   />
                 </motion.div>
               ))}
