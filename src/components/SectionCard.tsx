@@ -12,24 +12,28 @@ interface SectionCardProps {
   section: TaskSection
   selectedTask: number | null
   isSpinning: boolean
+  isSectionSpinning: boolean
   onUpdateName: (name: string) => void
   onAddTask: (task: string) => void
   onEditTask: (index: number, value: string) => void
   onDeleteTask: (index: number) => void
   onReorderTasks: (newOrder: string[]) => void
   onDeleteSection: () => void
+  onSpinSection: () => void
 }
 
 export function SectionCard({
   section,
   selectedTask,
   isSpinning,
+  isSectionSpinning,
   onUpdateName,
   onAddTask,
   onEditTask,
   onDeleteTask,
   onReorderTasks,
   onDeleteSection,
+  onSpinSection,
 }: SectionCardProps) {
   const [newTask, setNewTask] = useState('')
   const [isEditingName, setIsEditingName] = useState(false)
@@ -94,6 +98,15 @@ export function SectionCard({
         </Button>
       </div>
 
+      <Button
+        onClick={onSpinSection}
+        disabled={section.tasks.length === 0 || isSpinning || isSectionSpinning}
+        className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+      >
+        <Sparkle className="h-4 w-4" weight="fill" />
+        {isSectionSpinning ? 'Spinning...' : 'Spin This Section'}
+      </Button>
+
       <div className="flex gap-2">
         <Input
           placeholder="Enter a new task..."
@@ -134,7 +147,7 @@ export function SectionCard({
                   task={task}
                   index={index}
                   isSelected={selectedTask === index}
-                  isSpinning={isSpinning}
+                  isSpinning={isSpinning || isSectionSpinning}
                   onEdit={onEditTask}
                   onDelete={onDeleteTask}
                 />
