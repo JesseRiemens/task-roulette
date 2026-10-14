@@ -41,7 +41,7 @@ export class SpinEngine {
   static calculateStepDelay(step: number, maxSteps: number): number {
     const progress = step / maxSteps
     if (progress > 0.6) {
-      return BASE_DELAY_MS + (progress - 0.6) * 1500
+      return BASE_DELAY_MS + (progress - 0.6) * 1000
     }
     return BASE_DELAY_MS
   }

@@ -20,10 +20,11 @@ export function TaskItem({ task, index, isSelected, isSpinning, onEdit, onDelete
   const controls = useDragControls()
 
   useEffect(() => {
-    if (isSelected && isSpinning && itemRef.current) {
+    if (isSelected && itemRef.current) {
+      // Instant while spinning (smooth scrolls get cancelled by fast steps); smooth center on the final pick
       itemRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
+        behavior: isSpinning ? 'auto' : 'smooth',
+        block: 'center',
         inline: 'nearest'
       })
     }
