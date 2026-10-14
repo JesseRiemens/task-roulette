@@ -45,47 +45,40 @@ export function useSpinController(sections: TaskSection[]) {
     })
   }
 
+  const setSelection = (sectionId: string, index: number | null) => {
+    setSelectedTasks((current) => new Map(current).set(sectionId, index))
+  }
+
+  const setSectionSpinning = (sectionId: string, spinning: boolean) => {
+    setSpinningState((current) => new Map(current).set(sectionId, spinning))
+  }
+
+  const runSpin = async (section: TaskSection) => {
+    const config = SpinEngine.calculateSpinConfigs([section])[0]
+    let index = config.startIndex
+    setSelection(section.id, index)
+
+    for (let step = 0; step < config.totalSteps; step++) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, SpinEngine.calculateStepDelay(step, config.totalSteps)),
+      )
+      index = SpinEngine.getNextIndex(index, config.taskCount)
+      setSelection(section.id, index)
+    }
+
+    setSelection(section.id, config.finalSelection)
+  }
+
   const spinSection = async (sectionId: string) => {
     const section = sections.find((s) => s.id === sectionId)
     if (!section || section.tasks.length === 0 || spinningState.get(sectionId)) return
 
-    setSpinningState((current) => {
-      const newMap = new Map(current)
-      newMap.set(sectionId, true)
-      return newMap
-    })
-
-    const config = SpinEngine.calculateSpinConfigs([section])[0]
-
-    setSelectedTasks((current) => {
-      const newMap = new Map(current)
-      newMap.set(sectionId, config.startIndex)
-      return newMap
-    })
-
-    for (let step = 0; step < config.totalSteps; step++) {
-      const stepDelay = SpinEngine.calculateStepDelay(step, config.totalSteps)
-      await new Promise((resolve) => setTimeout(resolve, stepDelay))
-
-      setSelectedTasks((current) => {
-        const currentIndex = current.get(sectionId) ?? 0
-        const newMap = new Map(current)
-        newMap.set(sectionId, SpinEngine.getNextIndex(currentIndex, config.taskCount))
-        return newMap
-      })
+    setSectionSpinning(sectionId, true)
+    try {
+      await runSpin(section)
+    } finally {
+      setSectionSpinning(sectionId, false)
     }
-
-    setSelectedTasks((current) => {
-      const newMap = new Map(current)
-      newMap.set(sectionId, config.finalSelection)
-      return newMap
-    })
-
-    setSpinningState((current) => {
-      const newMap = new Map(current)
-      newMap.set(sectionId, false)
-      return newMap
-    })
   }
 
   const spinAll = async () => {
@@ -93,39 +86,11 @@ export function useSpinController(sections: TaskSection[]) {
     if (sectionsWithTasks.length === 0 || isSpinning) return
 
     setIsSpinning(true)
-
-    const spinPromises = sectionsWithTasks.map((section) => 
-      (async () => {
-        const config = SpinEngine.calculateSpinConfigs([section])[0]
-
-        setSelectedTasks((current) => {
-          const newMap = new Map(current)
-          newMap.set(section.id, config.startIndex)
-          return newMap
-        })
-
-        for (let step = 0; step < config.totalSteps; step++) {
-          const stepDelay = SpinEngine.calculateStepDelay(step, config.totalSteps)
-          await new Promise((resolve) => setTimeout(resolve, stepDelay))
-
-          setSelectedTasks((current) => {
-            const currentIndex = current.get(section.id) ?? 0
-            const newMap = new Map(current)
-            newMap.set(section.id, SpinEngine.getNextIndex(currentIndex, config.taskCount))
-            return newMap
-          })
-        }
-
-        setSelectedTasks((current) => {
-          const newMap = new Map(current)
-          newMap.set(section.id, config.finalSelection)
-          return newMap
-        })
-      })()
-    )
-
-    await Promise.all(spinPromises)
-    setIsSpinning(false)
+    try {
+      await Promise.all(sectionsWithTasks.map(runSpin))
+    } finally {
+      setIsSpinning(false)
+    }
   }
 
   return {

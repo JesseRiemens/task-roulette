@@ -371,7 +371,7 @@ export class LZStringEncoder implements URLEncoder {
     }
     dictionary[3] = c
     w = c
-    result.push(c)
+    result.push(c as string)
     while (true) {
       if (data.index > length) {
         return ""
