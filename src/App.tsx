@@ -1,11 +1,14 @@
 import { motion } from 'framer-motion'
-import { Plus, Copy, Sparkle } from '@phosphor-icons/react'
+import { useState } from 'react'
+import { Plus, Copy, Sparkle, Export, DownloadSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSectionManager } from '@/hooks/use-section-manager'
 import { useSpinController } from '@/hooks/use-spin-controller'
 import { SectionCard } from '@/components/SectionCard'
+import { MarkdownDialog } from '@/components/MarkdownDialog'
+import { formatSectionsAsMarkdown } from '@/lib/markdown-sections'
 
 export default function App() {
   const {
@@ -17,8 +20,10 @@ export default function App() {
     editTask,
     deleteTask,
     reorderTasks,
+    importSections,
     getSection,
   } = useSectionManager()
+  const [importOpen, setImportOpen] = useState(false)
 
   const {
     selectedTasks,
@@ -52,6 +57,15 @@ export default function App() {
     }
   }
 
+  const handleCopyForLLM = async () => {
+    try {
+      await navigator.clipboard.writeText(formatSectionsAsMarkdown(sections))
+      toast.success('Copied for LLM!')
+    } catch {
+      toast.error('Failed to copy')
+    }
+  }
+
   const hasAnyTasks = sections.some((s) => s.tasks.length > 0)
   const hasSingleSection = sections.length === 1
 
@@ -69,7 +83,7 @@ export default function App() {
           <p className="text-muted-foreground">
             Create sections, add tasks, and spin them all at once
           </p>
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <Button
               onClick={addSection}
               variant="outline"
@@ -86,6 +100,23 @@ export default function App() {
             >
               <Copy className="h-4 w-4" />
               Copy URL
+            </Button>
+            <Button
+              onClick={handleCopyForLLM}
+              variant="outline"
+              disabled={!sections.some((s) => s.tasks.length > 0)}
+              className="gap-2 h-9 text-sm"
+            >
+              <Export className="h-4 w-4" />
+              Copy for LLM
+            </Button>
+            <Button
+              onClick={() => setImportOpen(true)}
+              variant="outline"
+              className="gap-2 h-9 text-sm"
+            >
+              <DownloadSimple className="h-4 w-4" />
+              Paste from LLM
             </Button>
           </div>
         </motion.header>
@@ -151,6 +182,7 @@ export default function App() {
           </>
         )}
       </div>
+      <MarkdownDialog open={importOpen} onOpenChange={setImportOpen} onImport={importSections} />
     </div>
   )
 }

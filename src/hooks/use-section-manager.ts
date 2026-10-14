@@ -57,6 +57,10 @@ export function useSectionManager() {
     )
   }
 
+  const importSections = (imported: TaskSection[], mode: 'replace' | 'append') => {
+    setSections((current) => (mode === 'replace' ? imported : [...current, ...imported]))
+  }
+
   const getSection = (sectionId: string) => {
     return sections.find((s) => s.id === sectionId)
   }
@@ -70,6 +74,7 @@ export function useSectionManager() {
     editTask,
     deleteTask,
     reorderTasks,
+    importSections,
     getSection,
   }
 }
