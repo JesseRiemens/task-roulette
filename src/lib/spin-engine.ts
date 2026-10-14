@@ -5,7 +5,11 @@ export interface SpinConfig {
   taskCount: number
   totalSteps: number
   finalSelection: number
+  startIndex: number
 }
+
+const MAX_STEPS = 36
+const BASE_DELAY_MS = 45
 
 export class SpinEngine {
   static calculateSpinConfigs(sections: TaskSection[]): SpinConfig[] {
@@ -16,13 +20,20 @@ export class SpinEngine {
       const minFullRotations = 3
       const extraFullRotations = Math.floor(Math.random() * 2)
       const totalFullRotations = minFullRotations + extraFullRotations
-      const totalSteps = (totalFullRotations * section.tasks.length) + finalSelection + 1
+      const totalSteps = Math.min(
+        (totalFullRotations * section.tasks.length) + finalSelection + 1,
+        MAX_STEPS,
+      )
+      // Start so that walking totalSteps lands exactly on finalSelection
+      const n = section.tasks.length
+      const startIndex = (((finalSelection - totalSteps) % n) + n) % n
       
       return {
         sectionId: section.id,
         taskCount: section.tasks.length,
         totalSteps,
         finalSelection,
+        startIndex,
       }
     })
   }
@@ -30,9 +41,9 @@ export class SpinEngine {
   static calculateStepDelay(step: number, maxSteps: number): number {
     const progress = step / maxSteps
     if (progress > 0.6) {
-      return 70 + (progress - 0.6) * 3000
+      return BASE_DELAY_MS + (progress - 0.6) * 1500
     }
-    return 70
+    return BASE_DELAY_MS
   }
 
   static getNextIndex(currentIndex: number, taskCount: number): number {

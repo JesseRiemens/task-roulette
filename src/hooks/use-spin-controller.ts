@@ -59,7 +59,7 @@ export function useSpinController(sections: TaskSection[]) {
 
     setSelectedTasks((current) => {
       const newMap = new Map(current)
-      newMap.set(sectionId, 0)
+      newMap.set(sectionId, config.startIndex)
       return newMap
     })
 
@@ -100,7 +100,7 @@ export function useSpinController(sections: TaskSection[]) {
 
         setSelectedTasks((current) => {
           const newMap = new Map(current)
-          newMap.set(section.id, 0)
+          newMap.set(section.id, config.startIndex)
           return newMap
         })
 
